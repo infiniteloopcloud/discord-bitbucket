@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/infiniteloopcloud/discord-bitbucket/bitbucket"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/infiniteloopcloud/discord-bitbucket/bitbucket"
 )
 
 const (
@@ -42,7 +42,7 @@ func hello(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	http.HandleFunc("/webhooks", hello)
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe(":8000", nil)
 }
 
 func getChannelID(name string) string {
