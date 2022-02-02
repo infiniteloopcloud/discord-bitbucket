@@ -15,14 +15,15 @@ const (
 	failure   = 0xD10000
 	prCreated = 0x89CFF0
 	prUpdated = 0x0047AB
+	gray      = 0x979797
 )
 
 func Handle(eventType string, body []byte) (*discordgo.MessageEmbed, error) {
 	switch eventType {
 	case "repo:push":
 		return handlePush(body)
-	case "repo:commit_status_created":
-		return commitStatusCreated(body)
+	//case "repo:commit_status_created":
+	//	return commitStatusCreated(body)
 	case "repo:commit_status_updated":
 		return commitStatusUpdated(body)
 	case "pullrequest:created":
@@ -82,12 +83,26 @@ func commitStatusCreated(body []byte) (*discordgo.MessageEmbed, error) {
 }
 
 func commitStatusUpdated(body []byte) (*discordgo.MessageEmbed, error) {
-	var push RepoPushEvent
-	err := json.Unmarshal(body, &push)
+	var event RepoCommitStatusUpdatedEvent
+	err := json.Unmarshal(body, &event)
 	if err != nil {
 		return nil, err
 	}
-	return embed.NewEmbed().SetTitle(push.Repository.Name + " - Push").SetDescription(push.Actor.DisplayName + "pushed").MessageEmbed, nil
+	color := gray
+	if event.CommitStatus.State == "FAILED" {
+		color = failure
+	} else if event.CommitStatus.State == "SUCCESSFUL" {
+		color = success
+	}
+
+	return embed.NewEmbed().
+		SetTitle(event.CommitStatus.Name).
+		AddField("Status", event.CommitStatus.State).
+		AddField("Triggered by", event.CommitStatus.Commit.Author.User.DisplayName).
+		SetColor(color).
+		SetDescription("Pipeline trigger").
+		SetURL(event.CommitStatus.URL).
+		MessageEmbed, nil
 }
 
 func pullRequestCreated(body []byte) (*discordgo.MessageEmbed, error) {

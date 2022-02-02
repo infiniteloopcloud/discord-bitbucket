@@ -166,15 +166,21 @@ type RepoCommitStatusEvent struct {
 	Actor        Actor      `json:"actor"`
 	Repository   Repository `json:"repository"`
 	CommitStatus struct {
-		Name        string     `json:"name"`
-		Description string     `json:"description"`
-		State       string     `json:"state"`
-		Key         string     `json:"key"`
-		URL         string     `json:"url"`
-		Type        string     `json:"type"`
-		CreatedOn   *time.Time `json:"created_on"`
-		UpdatedOn   *time.Time `json:"updated_on"`
-		Links       Links      `json:"links"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		State       string `json:"state"`
+		Key         string `json:"key"`
+		URL         string `json:"url"`
+		Type        string `json:"type"`
+		Commit      struct {
+			Hash   string `json:"hash"`
+			Author struct {
+				User User `json:"user"`
+			} `json:"author"`
+		} `json:"commit"`
+		CreatedOn *time.Time `json:"created_on"`
+		UpdatedOn *time.Time `json:"updated_on"`
+		Links     Links      `json:"links"`
 	} `json:"commit_status"`
 }
 
