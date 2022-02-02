@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
-	embed "github.com/Clinet/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
+	"github.com/infiniteloopcloud/discord-bitbucket/bitbucket"
 )
 
 const (
@@ -21,16 +22,17 @@ var channelsCache map[string]string
 var guildID = "938346153509015552"
 
 func hello(w http.ResponseWriter, req *http.Request) {
-	//body, err := ioutil.ReadAll(req.Body)
-	//if err != nil {
-	//	log.Print(err)
-	//}
-	eventKey := req.Header.Get("X-Event-Key")
-
-	fmt.Println(eventKey)
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Print(err)
+	}
 
 	channelID := getChannelID("woocommerce")
-	_, err := getSession().ChannelMessageSendEmbed(channelID, embed.NewGenericEmbed(eventKey, "This is an example embed!"))
+	message, err := bitbucket.Handle(req.Header.Get("X-Event-Key"), body)
+	if err != nil {
+		log.Print(err)
+	}
+	_, err = getSession().ChannelMessageSendEmbed(channelID, message)
 	if err != nil {
 		log.Print(err)
 	}
