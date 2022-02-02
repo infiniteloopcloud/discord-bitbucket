@@ -30,17 +30,23 @@ func hello(w http.ResponseWriter, req *http.Request) {
 		log.Print(err)
 	}
 
-	channelID := getChannelID("woocommerce")
-	message, err := bitbucket.Handle(req.Header.Get("X-Event-Key"), body)
+	channel, message, err := bitbucket.Handle(req.Header.Get("X-Event-Key"), body)
 	if err != nil {
 		log.Print(err)
+		return
 	}
-	_, err = getSession().ChannelMessageSendEmbed(channelID, message)
-	if err != nil {
-		log.Print(err)
+	channelID := getChannelID(channel)
+	if channelID == "" {
+		channelID = getChannelID("unknown")
+	}
+	if channelID != "" {
+		_, err = getSession().ChannelMessageSendEmbed(channelID, message)
+		if err != nil {
+			log.Print(err)
+		}
 	}
 
-	fmt.Fprintf(w, "thanks\n")
+	fmt.Fprintf(w, "ACK")
 }
 
 func main() {
