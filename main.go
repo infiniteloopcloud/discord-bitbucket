@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -22,15 +21,16 @@ var channelsCache map[string]string
 var guildID = "938346153509015552"
 
 func hello(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Print(err)
-	}
+	//body, err := ioutil.ReadAll(req.Body)
+	//if err != nil {
+	//	log.Print(err)
+	//}
+	eventKey := req.Header.Get("X-Event-Key")
 
-	fmt.Println(string(body))
+	fmt.Println(eventKey)
 
 	channelID := getChannelID("woocommerce")
-	_, err = getSession().ChannelMessageSendEmbed(channelID, embed.NewGenericEmbed("Example", "This is an example embed!"))
+	_, err := getSession().ChannelMessageSendEmbed(channelID, embed.NewGenericEmbed(eventKey, "This is an example embed!"))
 	if err != nil {
 		log.Print(err)
 	}
@@ -39,8 +39,8 @@ func hello(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", hello)
-	http.ListenAndServe(":8090", nil)
+	http.HandleFunc("/webhooks", hello)
+	http.ListenAndServe(":80", nil)
 }
 
 func getChannelID(name string) string {
