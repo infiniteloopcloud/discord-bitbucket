@@ -145,6 +145,7 @@ type Comment struct {
 		From interface{} `json:"from"`
 		To   int         `json:"to"`
 	} `json:"inline"`
+	User      User       `json:"user"`
 	CreatedOn *time.Time `json:"created_on"`
 	UpdatedOn *time.Time `json:"updated_on"`
 	Links     Links      `json:"links"`
