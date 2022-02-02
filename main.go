@@ -9,15 +9,10 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/infiniteloopcloud/discord-bitbucket/bitbucket"
+	"github.com/infiniteloopcloud/discord-bitbucket/env"
 )
 
-const (
-	Token = "TOKEN"
-	// Get Guild ID for security reasons
-	GuildID = "GUILD_ID"
-
-	Address = "ADDRESS"
-)
+const ()
 
 var session *discordgo.Session
 var channelsCache map[string]string
@@ -27,22 +22,23 @@ var channelsCache map[string]string
 func hello(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		log.Print(err)
+		log.Printf("[ERROR] %s", err.Error())
 	}
 
-	channel, message, err := bitbucket.Handle(req.Header.Get("X-Event-Key"), body)
+	event := req.Header.Get("X-Event-Key")
+	channel, message, err := bitbucket.Handle(event, body)
 	if err != nil {
-		log.Print(err)
+		log.Printf("[ERROR] [%s] %s", event, err.Error())
 		return
 	}
 	channelID := getChannelID(channel)
 	if channelID == "" {
 		channelID = getChannelID("unknown")
 	}
-	if channelID != "" {
+	if channelID != "" && message != nil {
 		_, err = getSession().ChannelMessageSendEmbed(channelID, message)
 		if err != nil {
-			log.Print(err)
+			log.Printf("[ERROR] [%s] %s", event, err.Error())
 		}
 	}
 
@@ -51,13 +47,15 @@ func hello(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	address := ":8080"
-	if a := os.Getenv(Address); a != "" {
+	if a := os.Getenv(env.Address); a != "" {
 		address = a
 	}
 
 	http.HandleFunc("/webhooks", hello)
 	log.Printf("Server listening on %s", address)
-	http.ListenAndServe(address, nil)
+	if err := http.ListenAndServe(address, nil); err != nil {
+		log.Printf("[ERROR] %s", err.Error())
+	}
 }
 
 func getChannelID(name string) string {
@@ -67,7 +65,7 @@ func getChannelID(name string) string {
 	if id, ok := channelsCache[name]; ok {
 		return id
 	} else {
-		channels, err := getSession().GuildChannels(os.Getenv(GuildID))
+		channels, err := getSession().GuildChannels(os.Getenv(env.GuildID))
 		if err != nil {
 			log.Print(err)
 		}
@@ -84,9 +82,9 @@ func getChannelID(name string) string {
 func getSession() *discordgo.Session {
 	if session == nil {
 		var err error
-		session, err = discordgo.New("Bot " + os.Getenv(Token))
+		session, err = discordgo.New("Bot " + os.Getenv(env.Token))
 		if err != nil {
-			panic(err)
+			log.Printf("[ERROR] %s", err.Error())
 		}
 	}
 	return session
