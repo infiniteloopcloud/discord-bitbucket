@@ -155,7 +155,12 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 		message = message.AddField("Status", created.PullRequest.State)
 	}
 	if created.PullRequest.Description != "" {
-		message = message.AddField("PR Description", created.PullRequest.Description)
+		if len(created.PullRequest.Description) > 200 {
+			desc := created.PullRequest.Description[0:199] + "..."
+			message = message.AddField("PR Description", desc)
+		} else {
+			message = message.AddField("PR Description", created.PullRequest.Description)
+		}
 	}
 
 	return created.Repository.Name, message.MessageEmbed, nil
@@ -193,7 +198,12 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 		message = message.AddField("Status", updated.PullRequest.State)
 	}
 	if updated.PullRequest.Description != "" {
-		message = message.AddField("PR Description", updated.PullRequest.Description)
+		if len(updated.PullRequest.Description) > 200 {
+			desc := updated.PullRequest.Description[0:199] + "..."
+			message = message.AddField("PR Description", desc)
+		} else {
+			message = message.AddField("PR Description", updated.PullRequest.Description)
+		}
 	}
 
 	return updated.Repository.Name, message.MessageEmbed, nil
