@@ -143,7 +143,11 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetTitle(created.Actor.DisplayName+"created a new pull request: "+created.PullRequest.Title).SetColor(prCreated).AddField("Reviewers", reviewers)
+		SetAuthor(created.Actor.Nickname, created.Actor.Links.Avatar.Href).
+		SetTitle("["+created.PullRequest.Source.Repository.FullName+"]:"+" Pull request opened: "+created.PullRequest.Title).
+		SetURL(created.PullRequest.Links.HTML.Href).
+		SetColor(prCreated).
+		AddField("Reviewers", reviewers)
 
 	if created.PullRequest.Source.Branch.Name != "" && created.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + created.PullRequest.Source.Branch.Name + "` > `" + created.PullRequest.Destination.Branch.Name + "`")
@@ -157,9 +161,9 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	if created.PullRequest.Description != "" {
 		if len(created.PullRequest.Description) > 200 {
 			desc := created.PullRequest.Description[0:199] + "..."
-			message = message.AddField("PR Description", desc)
+			message = message.AddField("PR Description", "**"+desc+"**")
 		} else {
-			message = message.AddField("PR Description", created.PullRequest.Description)
+			message = message.AddField("PR Description", "**"+created.PullRequest.Description+"**")
 		}
 	}
 
@@ -174,11 +178,15 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 	reviewers := "none"
 	reviewerList := []string{}
-	for _, reviewer := range updated.PullRequest.Reviewers {
-		reviewerList = append(reviewerList, reviewer.DisplayName)
+	for _, reviewer := range updated.PullRequest.Participants {
+		if reviewer.Approved {
+			reviewerList = append(reviewerList, "**✓**"+reviewer.User.Nickname)
+		} else {
+			reviewerList = append(reviewerList, "**x **"+reviewer.User.Nickname)
+		}
 	}
 	if len(reviewerList) > 0 {
-		reviewers = strings.Join(reviewerList, ", ")
+		reviewers = strings.Join(reviewerList, "\n")
 	}
 
 	if updated.Actor.DisplayName == "" || updated.PullRequest.Title == "" {
@@ -186,7 +194,11 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetTitle(updated.Actor.DisplayName+"updated the pull request: "+updated.PullRequest.Title).SetColor(prCreated).AddField("Reviewers", reviewers)
+		SetAuthor(updated.Actor.Nickname, updated.Actor.Links.Avatar.Href).
+		SetTitle("["+updated.PullRequest.Source.Repository.FullName+"]:"+" Pull request updated: "+updated.PullRequest.Title).
+		SetURL(updated.PullRequest.Links.HTML.Href).
+		SetColor(prUpdated).
+		AddField("Reviewers", reviewers)
 
 	if updated.PullRequest.Source.Branch.Name != "" && updated.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + updated.PullRequest.Source.Branch.Name + "` > `" + updated.PullRequest.Destination.Branch.Name + "`")
@@ -200,9 +212,9 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	if updated.PullRequest.Description != "" {
 		if len(updated.PullRequest.Description) > 200 {
 			desc := updated.PullRequest.Description[0:199] + "..."
-			message = message.AddField("PR Description", desc)
+			message = message.AddField("PR Description", "**"+desc+"**")
 		} else {
-			message = message.AddField("PR Description", updated.PullRequest.Description)
+			message = message.AddField("PR Description", "**"+updated.PullRequest.Description+"**")
 		}
 	}
 
