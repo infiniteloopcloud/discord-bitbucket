@@ -143,7 +143,7 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetAuthor(created.Actor.Nickname, created.Actor.Links.Avatar.Href).
+		SetAuthor(created.Actor.DisplayName, created.Actor.Links.Avatar.Href).
 		SetTitle("["+created.PullRequest.Source.Repository.FullName+"]:"+" Pull request opened: "+created.PullRequest.Title).
 		SetURL(created.PullRequest.Links.HTML.Href).
 		SetColor(prCreated).
@@ -194,7 +194,7 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetAuthor(updated.Actor.Nickname, updated.Actor.Links.Avatar.Href).
+		SetAuthor(updated.Actor.DisplayName, updated.Actor.Links.Avatar.Href).
 		SetTitle("["+updated.PullRequest.Source.Repository.FullName+"]:"+" Pull request updated: "+updated.PullRequest.Title).
 		SetURL(updated.PullRequest.Links.HTML.Href).
 		SetColor(prUpdated).
