@@ -115,7 +115,7 @@ type Commit struct {
 
 // Actor is a common struct used in several types
 type Actor struct {
-	Nickname    string `json:"nickname"`
+	Username    string `json:"username"`
 	Type        string `json:"type"`
 	UUID        string `json:"uuid"`
 	Links       Links  `json:"links"`

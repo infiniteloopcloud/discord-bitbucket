@@ -143,11 +143,7 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetAuthor(created.Actor.Nickname, created.Actor.Links.Avatar.Href).
-		SetTitle("["+created.PullRequest.Source.Repository.FullName+"]:"+" Pull request opened: "+created.PullRequest.Title).
-		SetURL(created.PullRequest.Links.HTML.Href).
-		SetColor(prCreated).
-		AddField("Reviewers", reviewers)
+		SetTitle(created.Actor.DisplayName+"created a new pull request: "+created.PullRequest.Title).SetColor(prCreated).AddField("Reviewers", reviewers)
 
 	if created.PullRequest.Source.Branch.Name != "" && created.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + created.PullRequest.Source.Branch.Name + "` > `" + created.PullRequest.Destination.Branch.Name + "`")
@@ -190,11 +186,7 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetAuthor(updated.Actor.Nickname, updated.Actor.Links.Avatar.Href).
-		SetTitle("["+updated.PullRequest.Source.Repository.FullName+"]:"+" Pull request updated: "+updated.PullRequest.Title).
-		SetURL(updated.PullRequest.Links.HTML.Href).
-		SetColor(prUpdated).
-		AddField("Reviewers", reviewers)
+		SetTitle(updated.Actor.DisplayName+"updated the pull request: "+updated.PullRequest.Title).SetColor(prCreated).AddField("Reviewers", reviewers)
 
 	if updated.PullRequest.Source.Branch.Name != "" && updated.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + updated.PullRequest.Source.Branch.Name + "` > `" + updated.PullRequest.Destination.Branch.Name + "`")
