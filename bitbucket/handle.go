@@ -180,9 +180,9 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	reviewerList := []string{}
 	for _, reviewer := range updated.PullRequest.Participants {
 		if reviewer.Approved {
-			reviewerList = append(reviewerList, "**✓**"+reviewer.User.Nickname)
+			reviewerList = append(reviewerList, "**✓**"+reviewer.User.DisplayName)
 		} else {
-			reviewerList = append(reviewerList, "**x **"+reviewer.User.Nickname)
+			reviewerList = append(reviewerList, "**x **"+reviewer.User.DisplayName)
 		}
 	}
 	if len(reviewerList) > 0 {
