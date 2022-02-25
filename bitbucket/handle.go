@@ -110,7 +110,7 @@ func commitStatusUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 
 	message := embed.NewEmbed().
 		SetAuthor(event.CommitStatus.Commit.Author.User.DisplayName, event.CommitStatus.Commit.Author.User.Links.Avatar.Href).
-		SetTitle("[" + event.Repository.FullName + "]:" + event.CommitStatus.Name).
+		SetTitle("[" + event.Repository.FullName + "]: " + event.CommitStatus.Name).
 		SetColor(color)
 
 	if event.CommitStatus.State != "" {
