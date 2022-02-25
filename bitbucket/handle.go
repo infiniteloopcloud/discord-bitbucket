@@ -108,13 +108,13 @@ func commitStatusUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(event.CommitStatus.Name).SetColor(color).SetDescription("Pipeline trigger")
+	message := embed.NewEmbed().
+		SetAuthor(event.CommitStatus.Commit.Author.User.DisplayName, event.CommitStatus.Commit.Author.User.Links.Avatar.Href).
+		SetTitle("[" + event.Repository.FullName + "]:" + event.CommitStatus.Name).
+		SetColor(color)
 
 	if event.CommitStatus.State != "" {
 		message = message.AddField("Status", event.CommitStatus.State)
-	}
-	if event.CommitStatus.Commit.Author.User.DisplayName != "" {
-		message = message.AddField("Triggered by", event.CommitStatus.Commit.Author.User.DisplayName)
 	}
 	if event.CommitStatus.URL != "" {
 		message = message.SetURL(event.CommitStatus.URL)
