@@ -232,7 +232,7 @@ func pullRequestApproved(body []byte) (string, *discordgo.MessageEmbed, error) {
 
 	message := embed.NewEmbed().
 		SetAuthor(approved.Approval.User.DisplayName, approved.Approval.User.Links.Avatar.Href).
-		SetTitle("[" + approved.PullRequest.Source.Repository.FullName + "]:" + " Pull request Approved: " + approved.PullRequest.Title).
+		SetTitle("[" + approved.PullRequest.Source.Repository.FullName + "]:" + " Pull request approved: " + approved.PullRequest.Title).
 		SetColor(success)
 
 	if approved.PullRequest.Source.Branch.Name != "" && approved.PullRequest.Destination.Branch.Name != "" {
