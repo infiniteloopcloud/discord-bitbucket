@@ -242,7 +242,7 @@ func pullRequestApproved(body []byte) (string, *discordgo.MessageEmbed, error) {
 		message = message.SetURL(approved.PullRequest.Links.HTML.Href)
 	}
 	if approved.Actor.DisplayName != "" {
-		message = message.AddField("Created by", approved.Actor.DisplayName)
+		message = message.AddField("Created by", approved.PullRequest.Author.DisplayName)
 	}
 
 	return approved.Repository.Name, message.MessageEmbed, nil
@@ -273,7 +273,7 @@ func pullRequestUnapproved(body []byte) (string, *discordgo.MessageEmbed, error)
 		message = message.SetURL(unapproved.PullRequest.Links.HTML.Href)
 	}
 	if unapproved.Actor.DisplayName != "" {
-		message = message.AddField("Created by", unapproved.Actor.DisplayName)
+		message = message.AddField("Created by", unapproved.PullRequest.Author.DisplayName)
 	}
 
 	return unapproved.Repository.Name, message.MessageEmbed, nil
