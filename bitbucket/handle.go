@@ -143,9 +143,8 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetAuthor(created.Actor.DisplayName, created.Actor.Links.Avatar.Href).
+		SetAuthor(created.Actor.Nickname, created.Actor.Links.Avatar.Href).
 		SetTitle("["+created.PullRequest.Source.Repository.FullName+"]:"+" Pull request opened: "+created.PullRequest.Title).
-		SetURL(created.PullRequest.Links.HTML.Href).
 		SetColor(prCreated).
 		AddField("Reviewers", reviewers)
 
@@ -196,7 +195,6 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	message := embed.NewEmbed().
 		SetAuthor(updated.Actor.DisplayName, updated.Actor.Links.Avatar.Href).
 		SetTitle("["+updated.PullRequest.Source.Repository.FullName+"]:"+" Pull request updated: "+updated.PullRequest.Title).
-		SetURL(updated.PullRequest.Links.HTML.Href).
 		SetColor(prUpdated).
 		AddField("Reviewers", reviewers)
 
@@ -232,7 +230,10 @@ func pullRequestApproved(body []byte) (string, *discordgo.MessageEmbed, error) {
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(approved.Approval.User.DisplayName + " approved pull request: " + approved.PullRequest.Title).SetColor(success)
+	message := embed.NewEmbed().
+		SetAuthor(approved.Approval.User.DisplayName, approved.Approval.User.Links.Avatar.Href).
+		SetTitle("[" + approved.PullRequest.Source.Repository.FullName + "]:" + " Pull request Approved: " + approved.PullRequest.Title).
+		SetColor(success)
 
 	if approved.PullRequest.Source.Branch.Name != "" && approved.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + approved.PullRequest.Source.Branch.Name + "` > `" + approved.PullRequest.Destination.Branch.Name + "`")
@@ -258,7 +259,12 @@ func pullRequestUnapproved(body []byte) (string, *discordgo.MessageEmbed, error)
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(unapproved.Approval.User.DisplayName + " unapproved pull request: " + unapproved.PullRequest.Title).SetColor(success)
+	//message := embed.NewEmbed().SetTitle(unapproved.Approval.User.DisplayName + " unapproved pull request: " + unapproved.PullRequest.Title).SetColor(success)
+
+	message := embed.NewEmbed().
+		SetAuthor(unapproved.Approval.User.DisplayName, unapproved.Approval.User.Links.Avatar.Href).
+		SetTitle("[" + unapproved.PullRequest.Source.Repository.FullName + "]:" + " Pull request unapproved: " + unapproved.PullRequest.Title).
+		SetColor(failure)
 
 	if unapproved.PullRequest.Source.Branch.Name != "" && unapproved.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + unapproved.PullRequest.Source.Branch.Name + "` > `" + unapproved.PullRequest.Destination.Branch.Name + "`")
