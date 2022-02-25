@@ -143,7 +143,7 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetAuthor(created.Actor.Nickname, created.Actor.Links.Avatar.Href).
+		SetAuthor(created.Actor.DisplayName, created.Actor.Links.Avatar.Href).
 		SetTitle("["+created.PullRequest.Source.Repository.FullName+"]:"+" Pull request opened: "+created.PullRequest.Title).
 		SetColor(prCreated).
 		AddField("Reviewers", reviewers)
