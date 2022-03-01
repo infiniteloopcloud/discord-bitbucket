@@ -287,18 +287,26 @@ func pullRequestFulfilled(body []byte) (string, *discordgo.MessageEmbed, error) 
 	}
 	reviewers := "none"
 	reviewerList := []string{}
-	for _, reviewer := range merged.PullRequest.Reviewers {
-		reviewerList = append(reviewerList, reviewer.DisplayName)
+	for _, reviewer := range merged.PullRequest.Participants {
+		if reviewer.Approved {
+			reviewerList = append(reviewerList, "**✓**"+reviewer.User.DisplayName)
+		} else {
+			reviewerList = append(reviewerList, "**x **"+reviewer.User.DisplayName)
+		}
 	}
 	if len(reviewerList) > 0 {
-		reviewers = strings.Join(reviewerList, ", ")
+		reviewers = strings.Join(reviewerList, "\n")
 	}
 
 	if merged.PullRequest.ClosedBy.DisplayName == "" || merged.PullRequest.Title == "" {
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(merged.PullRequest.ClosedBy.DisplayName+" merged pull request: "+merged.PullRequest.Title).SetColor(success).AddField("Approved by", reviewers)
+	message := embed.NewEmbed().
+		SetAuthor(merged.Actor.DisplayName, merged.PullRequest.ClosedBy.Links.Avatar.Href).
+		SetTitle("["+merged.Repository.FullName+"]: Pull request merged: "+merged.PullRequest.Title).
+		SetColor(success).
+		AddField("Reviewers", reviewers)
 
 	if merged.PullRequest.Source.Branch.Name != "" && merged.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + merged.PullRequest.Source.Branch.Name + "` > `" + merged.PullRequest.Destination.Branch.Name + "`")
@@ -327,7 +335,10 @@ func pullRequestRejected(body []byte) (string, *discordgo.MessageEmbed, error) {
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(rejected.PullRequest.ClosedBy.DisplayName + " declined pull request: " + rejected.PullRequest.Title).SetColor(failure)
+	message := embed.NewEmbed().
+		SetAuthor(rejected.Actor.DisplayName, rejected.PullRequest.ClosedBy.Links.Avatar.Href).
+		SetTitle("[" + rejected.Repository.FullName + "]: Pull request rejected: " + rejected.PullRequest.Title).
+		SetColor(failure)
 
 	if rejected.PullRequest.Source.Branch.Name != "" && rejected.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + rejected.PullRequest.Source.Branch.Name + "` > `" + rejected.PullRequest.Destination.Branch.Name + "`")
@@ -337,6 +348,9 @@ func pullRequestRejected(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 	if rejected.Actor.DisplayName != "" {
 		message = message.AddField("Created by", rejected.Actor.DisplayName)
+	}
+	if rejected.PullRequest.State != "" {
+		message = message.AddField("Status", rejected.PullRequest.State)
 	}
 
 	return rejected.Repository.Name, message.MessageEmbed, nil
