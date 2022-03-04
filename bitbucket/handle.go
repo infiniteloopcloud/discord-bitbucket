@@ -2,7 +2,6 @@ package bitbucket
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -376,7 +375,8 @@ func pullRequestCommentCreated(body []byte) (string, *discordgo.MessageEmbed, er
 	}
 
 	message := embed.NewEmbed().
-		SetTitle(commentCreated.Comment.User.DisplayName+" commented pull request: "+commentCreated.PullRequest.Title).
+		SetAuthor(commentCreated.Actor.DisplayName, commentCreated.Actor.Links.Avatar.Href).
+		SetTitle("["+commentCreated.PullRequest.Destination.Repository.FullName+"]:"+" Comment created on pull request: "+commentCreated.PullRequest.Title).
 		AddField("Comment", comment).
 		SetColor(prCreated)
 
@@ -390,8 +390,31 @@ func pullRequestCommentCreated(body []byte) (string, *discordgo.MessageEmbed, er
 	return commentCreated.Repository.Name, message.MessageEmbed, nil
 }
 
-func pullRequestCommentUpdated(_ []byte) (string, *discordgo.MessageEmbed, error) {
-	return "", nil, errors.New("not supported: pullRequestCommentUpdated")
+func pullRequestCommentUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
+	var commentUpdated PullRequestCommentCreatedEvent
+	err := json.Unmarshal(body, &commentUpdated)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if commentUpdated.Comment.User.DisplayName == "" || commentUpdated.PullRequest.Title == "" {
+		return "", nil, nil
+	}
+
+	message := embed.NewEmbed().
+		SetAuthor(commentUpdated.Actor.DisplayName, commentUpdated.Actor.Links.Avatar.Href).
+		SetTitle("["+commentUpdated.PullRequest.Destination.Repository.FullName+"]:"+" Comment updated on pull request: "+commentUpdated.PullRequest.Title).
+		AddField("Author:", commentUpdated.Comment.User.DisplayName).
+		SetColor(prUpdated)
+
+	if commentUpdated.PullRequest.Source.Branch.Name != "" && commentUpdated.PullRequest.Destination.Branch.Name != "" {
+		message = message.SetDescription("`" + commentUpdated.PullRequest.Source.Branch.Name + "` > `" + commentUpdated.PullRequest.Destination.Branch.Name + "`")
+	}
+	if commentUpdated.Comment.Links.HTML.Href != "" {
+		message = message.SetURL(commentUpdated.Comment.Links.HTML.Href)
+	}
+
+	return commentUpdated.Repository.Name, message.MessageEmbed, nil
 }
 
 func pullRequestCommentDeleted(body []byte) (string, *discordgo.MessageEmbed, error) {
@@ -406,7 +429,9 @@ func pullRequestCommentDeleted(body []byte) (string, *discordgo.MessageEmbed, er
 	}
 
 	message := embed.NewEmbed().
-		SetTitle(commentDeleted.Comment.User.DisplayName + " comment deleted on pull request: " + commentDeleted.PullRequest.Title).
+		SetAuthor(commentDeleted.Actor.DisplayName, commentDeleted.Actor.Links.Avatar.Href).
+		SetTitle("["+commentDeleted.PullRequest.Destination.Repository.FullName+"]:"+" Comment deleted on pull request: "+commentDeleted.PullRequest.Title).
+		AddField("Author:", commentDeleted.Comment.User.DisplayName).
 		SetColor(failure)
 
 	if commentDeleted.PullRequest.Source.Branch.Name != "" && commentDeleted.PullRequest.Destination.Branch.Name != "" {
