@@ -109,7 +109,7 @@ func commitStatusUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 
 	message := embed.NewEmbed().
 		SetAuthor(event.CommitStatus.Commit.Author.User.DisplayName, event.CommitStatus.Commit.Author.User.Links.Avatar.Href).
-		SetTitle("[" + event.Repository.FullName + "]:" + event.CommitStatus.Name).
+		SetTitle("[" + event.Repository.FullName + "]: " + event.CommitStatus.Name).
 		SetColor(color)
 
 	if event.CommitStatus.State != "" {
@@ -241,7 +241,7 @@ func pullRequestApproved(body []byte) (string, *discordgo.MessageEmbed, error) {
 		message = message.SetURL(approved.PullRequest.Links.HTML.Href)
 	}
 	if approved.Actor.DisplayName != "" {
-		message = message.AddField("Created by", approved.Actor.DisplayName)
+		message = message.AddField("Created by", approved.PullRequest.Author.DisplayName)
 	}
 
 	return approved.Repository.Name, message.MessageEmbed, nil
@@ -272,7 +272,7 @@ func pullRequestUnapproved(body []byte) (string, *discordgo.MessageEmbed, error)
 		message = message.SetURL(unapproved.PullRequest.Links.HTML.Href)
 	}
 	if unapproved.Actor.DisplayName != "" {
-		message = message.AddField("Created by", unapproved.Actor.DisplayName)
+		message = message.AddField("Created by", unapproved.PullRequest.Author.DisplayName)
 	}
 
 	return unapproved.Repository.Name, message.MessageEmbed, nil
