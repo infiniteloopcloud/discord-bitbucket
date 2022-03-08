@@ -2,7 +2,6 @@ package bitbucket
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -108,13 +107,13 @@ func commitStatusUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(event.CommitStatus.Name).SetColor(color).SetDescription("Pipeline trigger")
+	message := embed.NewEmbed().
+		SetAuthor(event.CommitStatus.Commit.Author.User.DisplayName, event.CommitStatus.Commit.Author.User.Links.Avatar.Href).
+		SetTitle("[" + event.Repository.FullName + "]: " + event.CommitStatus.Name).
+		SetColor(color)
 
 	if event.CommitStatus.State != "" {
 		message = message.AddField("Status", event.CommitStatus.State)
-	}
-	if event.CommitStatus.Commit.Author.User.DisplayName != "" {
-		message = message.AddField("Triggered by", event.CommitStatus.Commit.Author.User.DisplayName)
 	}
 	if event.CommitStatus.URL != "" {
 		message = message.SetURL(event.CommitStatus.URL)
@@ -143,7 +142,10 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetTitle(created.Actor.DisplayName+"created a new pull request: "+created.PullRequest.Title).SetColor(prCreated).AddField("Reviewers", reviewers)
+		SetAuthor(created.Actor.DisplayName, created.Actor.Links.Avatar.Href).
+		SetTitle("["+created.PullRequest.Source.Repository.FullName+"]:"+" Pull request opened: "+created.PullRequest.Title).
+		SetColor(prCreated).
+		AddField("Reviewers", reviewers)
 
 	if created.PullRequest.Source.Branch.Name != "" && created.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + created.PullRequest.Source.Branch.Name + "` > `" + created.PullRequest.Destination.Branch.Name + "`")
@@ -157,9 +159,9 @@ func pullRequestCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	if created.PullRequest.Description != "" {
 		if len(created.PullRequest.Description) > 200 {
 			desc := created.PullRequest.Description[0:199] + "..."
-			message = message.AddField("PR Description", desc)
+			message = message.AddField("PR Description", "**"+desc+"**")
 		} else {
-			message = message.AddField("PR Description", created.PullRequest.Description)
+			message = message.AddField("PR Description", "**"+created.PullRequest.Description+"**")
 		}
 	}
 
@@ -174,11 +176,15 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 	reviewers := "none"
 	reviewerList := []string{}
-	for _, reviewer := range updated.PullRequest.Reviewers {
-		reviewerList = append(reviewerList, reviewer.DisplayName)
+	for _, reviewer := range updated.PullRequest.Participants {
+		if reviewer.Approved {
+			reviewerList = append(reviewerList, "**✓**"+reviewer.User.DisplayName)
+		} else {
+			reviewerList = append(reviewerList, "**x **"+reviewer.User.DisplayName)
+		}
 	}
 	if len(reviewerList) > 0 {
-		reviewers = strings.Join(reviewerList, ", ")
+		reviewers = strings.Join(reviewerList, "\n")
 	}
 
 	if updated.Actor.DisplayName == "" || updated.PullRequest.Title == "" {
@@ -186,7 +192,10 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	message := embed.NewEmbed().
-		SetTitle(updated.Actor.DisplayName+"updated the pull request: "+updated.PullRequest.Title).SetColor(prCreated).AddField("Reviewers", reviewers)
+		SetAuthor(updated.Actor.DisplayName, updated.Actor.Links.Avatar.Href).
+		SetTitle("["+updated.PullRequest.Source.Repository.FullName+"]:"+" Pull request updated: "+updated.PullRequest.Title).
+		SetColor(prUpdated).
+		AddField("Reviewers", reviewers)
 
 	if updated.PullRequest.Source.Branch.Name != "" && updated.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + updated.PullRequest.Source.Branch.Name + "` > `" + updated.PullRequest.Destination.Branch.Name + "`")
@@ -200,9 +209,9 @@ func pullRequestUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
 	if updated.PullRequest.Description != "" {
 		if len(updated.PullRequest.Description) > 200 {
 			desc := updated.PullRequest.Description[0:199] + "..."
-			message = message.AddField("PR Description", desc)
+			message = message.AddField("PR Description", "**"+desc+"**")
 		} else {
-			message = message.AddField("PR Description", updated.PullRequest.Description)
+			message = message.AddField("PR Description", "**"+updated.PullRequest.Description+"**")
 		}
 	}
 
@@ -220,7 +229,10 @@ func pullRequestApproved(body []byte) (string, *discordgo.MessageEmbed, error) {
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(approved.Approval.User.DisplayName + " approved pull request: " + approved.PullRequest.Title).SetColor(success)
+	message := embed.NewEmbed().
+		SetAuthor(approved.Approval.User.DisplayName, approved.Approval.User.Links.Avatar.Href).
+		SetTitle("[" + approved.PullRequest.Source.Repository.FullName + "]:" + " Pull request approved: " + approved.PullRequest.Title).
+		SetColor(success)
 
 	if approved.PullRequest.Source.Branch.Name != "" && approved.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + approved.PullRequest.Source.Branch.Name + "` > `" + approved.PullRequest.Destination.Branch.Name + "`")
@@ -229,7 +241,7 @@ func pullRequestApproved(body []byte) (string, *discordgo.MessageEmbed, error) {
 		message = message.SetURL(approved.PullRequest.Links.HTML.Href)
 	}
 	if approved.Actor.DisplayName != "" {
-		message = message.AddField("Created by", approved.Actor.DisplayName)
+		message = message.AddField("Created by", approved.PullRequest.Author.DisplayName)
 	}
 
 	return approved.Repository.Name, message.MessageEmbed, nil
@@ -246,7 +258,12 @@ func pullRequestUnapproved(body []byte) (string, *discordgo.MessageEmbed, error)
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(unapproved.Approval.User.DisplayName + " unapproved pull request: " + unapproved.PullRequest.Title).SetColor(success)
+	//message := embed.NewEmbed().SetTitle(unapproved.Approval.User.DisplayName + " unapproved pull request: " + unapproved.PullRequest.Title).SetColor(success)
+
+	message := embed.NewEmbed().
+		SetAuthor(unapproved.Approval.User.DisplayName, unapproved.Approval.User.Links.Avatar.Href).
+		SetTitle("[" + unapproved.PullRequest.Source.Repository.FullName + "]:" + " Pull request unapproved: " + unapproved.PullRequest.Title).
+		SetColor(failure)
 
 	if unapproved.PullRequest.Source.Branch.Name != "" && unapproved.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + unapproved.PullRequest.Source.Branch.Name + "` > `" + unapproved.PullRequest.Destination.Branch.Name + "`")
@@ -255,7 +272,7 @@ func pullRequestUnapproved(body []byte) (string, *discordgo.MessageEmbed, error)
 		message = message.SetURL(unapproved.PullRequest.Links.HTML.Href)
 	}
 	if unapproved.Actor.DisplayName != "" {
-		message = message.AddField("Created by", unapproved.Actor.DisplayName)
+		message = message.AddField("Created by", unapproved.PullRequest.Author.DisplayName)
 	}
 
 	return unapproved.Repository.Name, message.MessageEmbed, nil
@@ -269,18 +286,26 @@ func pullRequestFulfilled(body []byte) (string, *discordgo.MessageEmbed, error) 
 	}
 	reviewers := "none"
 	reviewerList := []string{}
-	for _, reviewer := range merged.PullRequest.Reviewers {
-		reviewerList = append(reviewerList, reviewer.DisplayName)
+	for _, reviewer := range merged.PullRequest.Participants {
+		if reviewer.Approved {
+			reviewerList = append(reviewerList, "**✓**"+reviewer.User.DisplayName)
+		} else {
+			reviewerList = append(reviewerList, "**x **"+reviewer.User.DisplayName)
+		}
 	}
 	if len(reviewerList) > 0 {
-		reviewers = strings.Join(reviewerList, ", ")
+		reviewers = strings.Join(reviewerList, "\n")
 	}
 
 	if merged.PullRequest.ClosedBy.DisplayName == "" || merged.PullRequest.Title == "" {
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(merged.PullRequest.ClosedBy.DisplayName+" merged pull request: "+merged.PullRequest.Title).SetColor(success).AddField("Approved by", reviewers)
+	message := embed.NewEmbed().
+		SetAuthor(merged.Actor.DisplayName, merged.PullRequest.ClosedBy.Links.Avatar.Href).
+		SetTitle("["+merged.Repository.FullName+"]: Pull request merged: "+merged.PullRequest.Title).
+		SetColor(success).
+		AddField("Reviewers", reviewers)
 
 	if merged.PullRequest.Source.Branch.Name != "" && merged.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + merged.PullRequest.Source.Branch.Name + "` > `" + merged.PullRequest.Destination.Branch.Name + "`")
@@ -309,7 +334,10 @@ func pullRequestRejected(body []byte) (string, *discordgo.MessageEmbed, error) {
 		return "", nil, nil
 	}
 
-	message := embed.NewEmbed().SetTitle(rejected.PullRequest.ClosedBy.DisplayName + " declined pull request: " + rejected.PullRequest.Title).SetColor(failure)
+	message := embed.NewEmbed().
+		SetAuthor(rejected.Actor.DisplayName, rejected.PullRequest.ClosedBy.Links.Avatar.Href).
+		SetTitle("[" + rejected.Repository.FullName + "]: Pull request rejected: " + rejected.PullRequest.Title).
+		SetColor(failure)
 
 	if rejected.PullRequest.Source.Branch.Name != "" && rejected.PullRequest.Destination.Branch.Name != "" {
 		message = message.SetDescription("`" + rejected.PullRequest.Source.Branch.Name + "` > `" + rejected.PullRequest.Destination.Branch.Name + "`")
@@ -319,6 +347,9 @@ func pullRequestRejected(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 	if rejected.Actor.DisplayName != "" {
 		message = message.AddField("Created by", rejected.Actor.DisplayName)
+	}
+	if rejected.PullRequest.State != "" {
+		message = message.AddField("Status", rejected.PullRequest.State)
 	}
 
 	return rejected.Repository.Name, message.MessageEmbed, nil
@@ -344,7 +375,8 @@ func pullRequestCommentCreated(body []byte) (string, *discordgo.MessageEmbed, er
 	}
 
 	message := embed.NewEmbed().
-		SetTitle(commentCreated.Comment.User.DisplayName+" commented pull request: "+commentCreated.PullRequest.Title).
+		SetAuthor(commentCreated.Actor.DisplayName, commentCreated.Actor.Links.Avatar.Href).
+		SetTitle("["+commentCreated.PullRequest.Destination.Repository.FullName+"]:"+" Comment created on pull request: "+commentCreated.PullRequest.Title).
 		AddField("Comment", comment).
 		SetColor(prCreated)
 
@@ -358,8 +390,31 @@ func pullRequestCommentCreated(body []byte) (string, *discordgo.MessageEmbed, er
 	return commentCreated.Repository.Name, message.MessageEmbed, nil
 }
 
-func pullRequestCommentUpdated(_ []byte) (string, *discordgo.MessageEmbed, error) {
-	return "", nil, errors.New("not supported: pullRequestCommentUpdated")
+func pullRequestCommentUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {
+	var commentUpdated PullRequestCommentCreatedEvent
+	err := json.Unmarshal(body, &commentUpdated)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if commentUpdated.Comment.User.DisplayName == "" || commentUpdated.PullRequest.Title == "" {
+		return "", nil, nil
+	}
+
+	message := embed.NewEmbed().
+		SetAuthor(commentUpdated.Actor.DisplayName, commentUpdated.Actor.Links.Avatar.Href).
+		SetTitle("["+commentUpdated.PullRequest.Destination.Repository.FullName+"]:"+" Comment updated on pull request: "+commentUpdated.PullRequest.Title).
+		AddField("Author:", commentUpdated.Comment.User.DisplayName).
+		SetColor(prUpdated)
+
+	if commentUpdated.PullRequest.Source.Branch.Name != "" && commentUpdated.PullRequest.Destination.Branch.Name != "" {
+		message = message.SetDescription("`" + commentUpdated.PullRequest.Source.Branch.Name + "` > `" + commentUpdated.PullRequest.Destination.Branch.Name + "`")
+	}
+	if commentUpdated.Comment.Links.HTML.Href != "" {
+		message = message.SetURL(commentUpdated.Comment.Links.HTML.Href)
+	}
+
+	return commentUpdated.Repository.Name, message.MessageEmbed, nil
 }
 
 func pullRequestCommentDeleted(body []byte) (string, *discordgo.MessageEmbed, error) {
@@ -374,7 +429,9 @@ func pullRequestCommentDeleted(body []byte) (string, *discordgo.MessageEmbed, er
 	}
 
 	message := embed.NewEmbed().
-		SetTitle(commentDeleted.Comment.User.DisplayName + " comment deleted on pull request: " + commentDeleted.PullRequest.Title).
+		SetAuthor(commentDeleted.Actor.DisplayName, commentDeleted.Actor.Links.Avatar.Href).
+		SetTitle("["+commentDeleted.PullRequest.Destination.Repository.FullName+"]:"+" Comment deleted on pull request: "+commentDeleted.PullRequest.Title).
+		AddField("Author:", commentDeleted.Comment.User.DisplayName).
 		SetColor(failure)
 
 	if commentDeleted.PullRequest.Source.Branch.Name != "" && commentDeleted.PullRequest.Destination.Branch.Name != "" {

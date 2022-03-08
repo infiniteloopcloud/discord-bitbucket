@@ -115,7 +115,7 @@ type Commit struct {
 
 // Actor is a common struct used in several types
 type Actor struct {
-	Username    string `json:"username"`
+	Nickname    string `json:"nickname"`
 	Type        string `json:"type"`
 	UUID        string `json:"uuid"`
 	Links       Links  `json:"links"`
@@ -364,7 +364,7 @@ type Participant struct {
 // User https://confluence.atlassian.com/bitbucket/event-payloads-740262817.html#EventPayloads-entity_userUser
 type User struct {
 	Type        string `json:"type"`
-	Username    string `json:"username"`
+	Nickname    string `json:"Nickname"`
 	DisplayName string `json:"display_name"`
 	UUID        string `json:"uuid"`
 	Links       Links  `json:"links"`
