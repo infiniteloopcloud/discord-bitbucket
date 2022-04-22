@@ -16,3 +16,4 @@ vendor/
 go.sum
 .idea
 tests
+config.json

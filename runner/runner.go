@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/infiniteloopcloud/discord-bitbucket/bitbucket"
@@ -15,7 +14,7 @@ import (
 var session *discordgo.Session
 var channelsCache map[string]string
 
-func hello(w http.ResponseWriter, req *http.Request) {
+func webhookHandler(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("[ERROR] %s", err.Error())
@@ -48,7 +47,7 @@ func getChannelID(name string) string {
 	if id, ok := channelsCache[name]; ok {
 		return id
 	} else {
-		channels, err := getSession().GuildChannels(os.Getenv(env.GuildID))
+		channels, err := getSession().GuildChannels(env.Configuration().BotGuild)
 		if err != nil {
 			log.Print(err)
 		}
@@ -65,7 +64,7 @@ func getChannelID(name string) string {
 func getSession() *discordgo.Session {
 	if session == nil {
 		var err error
-		session, err = discordgo.New("Bot " + os.Getenv(env.Token))
+		session, err = discordgo.New("Bot " + env.Configuration().BotToken)
 		if err != nil {
 			log.Printf("[ERROR] %s", err.Error())
 		}
@@ -74,26 +73,13 @@ func getSession() *discordgo.Session {
 }
 
 func Run() {
-	//Show the bot online if it's running
-	go func() {
-		goBot, err := discordgo.New("Bot " + os.Getenv(env.Token))
-		if err != nil {
-			log.Printf("[ERROR] %s", err.Error())
-		}
-	
-		err = goBot.Open()
-		if err != nil {
-			log.Printf("[ERROR] %s", err.Error())
-		}
-	}()
 
 	address := ":8080"
-	if a := os.Getenv(env.Address); a != "" {
+	if a := env.Configuration().Address; a != "" {
 		address = a
 	}
 
-	http.HandleFunc("/webhooks", hello)
-	log.Println("Bitbucket Discord bot running")
+	http.HandleFunc("/webhooks", webhookHandler)
 	log.Printf("Server listening on %s", address)
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Printf("[ERROR] %s", err.Error())
