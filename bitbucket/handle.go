@@ -47,7 +47,7 @@ func Handle(eventType string, body []byte) (string, *discordgo.MessageEmbed, err
 }
 
 func handlePush(body []byte) (string, *discordgo.MessageEmbed, error) {
-	if env.Configuration().SkipRepoPushMessages == "true" {
+	if env.Configuration().SkipRepoPushMessages {
 		return "", nil, nil
 	}
 
