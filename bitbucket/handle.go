@@ -22,8 +22,6 @@ func Handle(eventType string, body []byte) (string, *discordgo.MessageEmbed, err
 	switch eventType {
 	case "repo:push":
 		return handlePush(body)
-	//case "repo:commit_status_created":
-	//	return commitStatusCreated(body)
 	case "repo:commit_status_updated":
 		return commitStatusUpdated(body)
 	case "pullrequest:created":
@@ -78,15 +76,6 @@ func handlePush(body []byte) (string, *discordgo.MessageEmbed, error) {
 	}
 
 	return push.Repository.Name, message.MessageEmbed, nil
-}
-
-func commitStatusCreated(body []byte) (string, *discordgo.MessageEmbed, error) {
-	var push RepoPushEvent
-	err := json.Unmarshal(body, &push)
-	if err != nil {
-		return "", nil, err
-	}
-	return "", embed.NewEmbed().SetTitle(push.Repository.Name + " - Push").SetDescription(push.Actor.DisplayName + "pushed").MessageEmbed, nil
 }
 
 func commitStatusUpdated(body []byte) (string, *discordgo.MessageEmbed, error) {

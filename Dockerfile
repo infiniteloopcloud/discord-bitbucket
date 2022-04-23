@@ -5,16 +5,15 @@ WORKDIR /app
 ENV CGO_ENABLED=0
 ENV GO111MODULE=on
 
-COPY go.mod go.sum ./
-RUN go mod download
 COPY . .
+RUN go get
+RUN go mod vendor
 
 RUN go build -o /app/main .
 
 FROM scratch AS final
-WORKDIR /app
+
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /app/main /app
-COPY config.json /app
-EXPOSE 8080
+COPY --from=build /app/main /
+
 CMD [ "./main" ]

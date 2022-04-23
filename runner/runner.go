@@ -40,6 +40,10 @@ func webhookHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "ACK")
 }
 
+func healthCheckHandler(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, "ACK")
+}
+
 func getChannelID(name string) string {
 	if channelsCache == nil {
 		channelsCache = make(map[string]string)
@@ -73,6 +77,7 @@ func getSession() *discordgo.Session {
 }
 
 func Run() {
+	env.Configuration().Dump()
 
 	address := ":8080"
 	if a := env.Configuration().Address; a != "" {
@@ -80,6 +85,7 @@ func Run() {
 	}
 
 	http.HandleFunc("/webhooks", webhookHandler)
+	http.HandleFunc("/hc", healthCheckHandler)
 	log.Printf("Server listening on %s", address)
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Printf("[ERROR] %s", err.Error())
