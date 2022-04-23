@@ -3,7 +3,6 @@ package bitbucket
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	embed "github.com/Clinet/discordgo-embed"
@@ -50,7 +49,7 @@ func Handle(eventType string, body []byte) (string, *discordgo.MessageEmbed, err
 }
 
 func handlePush(body []byte) (string, *discordgo.MessageEmbed, error) {
-	if os.Getenv(env.SkipRepoPushMessages) == "true" {
+	if env.Configuration().SkipRepoPushMessages == "true" {
 		return "", nil, nil
 	}
 
