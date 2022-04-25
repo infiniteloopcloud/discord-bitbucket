@@ -84,8 +84,8 @@ func Run() {
 		address = a
 	}
 
-	http.HandleFunc("/webhooks", webhookHandler)
-	http.HandleFunc("/hc", healthCheckHandler)
+	http.HandleFunc("/bitbucket/webhooks", webhookHandler)
+	http.HandleFunc("/bitbucket/hc", healthCheckHandler)
 	log.Printf("Server listening on %s", address)
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Printf("[ERROR] %s", err.Error())
